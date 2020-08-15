@@ -9,17 +9,26 @@ import { Strategy, ExtractJwt, StrategyOptions } from 'passport-jwt';
 import passport from 'passport';
 import { Roles } from '../../utils';
 import { ContainerDependencies } from '../../utils/constants';
+import { Result } from '../Result';
+import { Logger } from 'winston';
 
-@Service()
+@Service('AuthService')
 class AuthService {
-  constructor(@Inject(ContainerDependencies.LOGGER) private logger) {}
+  constructor(@Inject(ContainerDependencies.LOGGER) private logger: Logger) {}
 
   public initialize = () => {
     passport.use('jwt', this.getStrategy());
     return passport.initialize();
   };
 
-  public async signUp(user: UserDTO): Promise<any> {
+  public async signUp(
+    user: UserDTO
+  ): Promise<
+    Result<{
+      user: User;
+      token: string;
+    }>
+  > {
     try {
       const salt = randomBytes(32);
       const { username, email, phone, password, firstName, lastName } = user;
@@ -39,18 +48,21 @@ class AuthService {
       const signedUpUser: User = await User.create(newUser);
       const token = this.generateToken(signedUpUser);
       if (!signedUpUser) {
-        throw new Error('Unable to create user');
+        return Result.fail<{
+          user: User;
+          token: string;
+        }>('Unable to create user');
       }
 
       Reflect.deleteProperty(signedUpUser, 'password');
-      return { user: signedUpUser, token };
+      return Result.ok({ user: signedUpUser, token });
     } catch (e) {
       this.logger.error(e);
       throw e;
     }
   }
 
-  public async signIn(email: string, password: string): Promise<string> {
+  public async signIn(email: string, password: string): Promise<Result<string>> {
     const user = await User.findOne({
       where: {
         email: email
@@ -63,9 +75,9 @@ class AuthService {
     const validPassword = await argon2.verify(user.password, password);
     if (validPassword) {
       const token = this.generateToken(user);
-      return token;
+      return Result.ok(token);
     } else {
-      throw new Error('Invalid Password');
+      return Result.fail<string>('Invalid Password');
     }
   }
 

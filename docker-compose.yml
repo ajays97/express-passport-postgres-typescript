@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  boilerplate_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: yarn start
+    environment:
+      ENV_NAME: dev
+    ports:
+      - ${PORT}:${PORT}
+    volumes:
+      - ./:/usr/src/boilerplate/
+      - nodemodules:/usr/src/boilerplate/node_modules
+    links:
+      - boilerplate_postgres
+    depends_on:
+      - boilerplate_postgres
+  boilerplate_postgres:
+    image: postgres
+    container_name: 'my_postgres'
+    ports:
+      - ${DATABASE_PORT}:${DATABASE_PORT}
+    environment:
+      POSTGRES_PASSWORD: ${DATABASE_PWD}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_DB: ${DATABASE_NAME}
+      PGDATA: /tmp
+    volumes:
+      - ./pg/db_data:/var/lib/postgresql/data
+
+volumes:
+  nodemodules: {}

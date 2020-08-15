@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 
 import { ME } from '../constants';
 import { Service } from 'typedi';
@@ -15,7 +15,7 @@ class UserRouter extends BaseRouter {
   }
 
   get routes() {
-    let routes: Array<IRoute> = [];
+    const routes: Array<IRoute> = [];
 
     routes.push({
       httpVerb: HttpVerb.POST,
@@ -26,7 +26,7 @@ class UserRouter extends BaseRouter {
     return routes;
   }
 
-  me(req, res, next) {
+  me(req: Request, res: Response, next: NextFunction) {
     res.json({ message: 'you are authorized' }).status(200);
   }
 }

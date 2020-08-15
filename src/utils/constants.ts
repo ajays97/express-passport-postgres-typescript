@@ -1,5 +1,6 @@
 export enum ContainerDependencies {
-  LOGGER = 'logger'
+  LOGGER = 'logger',
+  RESULT = 'Result'
 }
 
 export enum ErrorCodes {

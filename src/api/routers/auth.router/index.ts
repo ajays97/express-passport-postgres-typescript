@@ -7,6 +7,7 @@ import { AuthController } from '../../controllers';
 import { HttpVerb } from '../../../utils/constants';
 import BaseRouter from '../base.router';
 import { IRoute } from '../../../interfaces/IRoute';
+import { Container } from 'typedi';
 
 @Service()
 class AuthRouter extends BaseRouter {
@@ -15,7 +16,8 @@ class AuthRouter extends BaseRouter {
   }
 
   get routes() {
-    let routes: Array<IRoute> = [];
+    const routes: Array<IRoute> = [];
+    const authController = Container.get(AuthController);
 
     routes.push({
       httpVerb: HttpVerb.POST,
@@ -31,11 +33,11 @@ class AuthRouter extends BaseRouter {
             phone: Joi.string().required()
           })
         }),
-        AuthController.register
+        authController.register
       ]
     });
 
-    routes.push({ httpVerb: HttpVerb.POST, path: SIGNIN, handlers: [AuthController.login] });
+    routes.push({ httpVerb: HttpVerb.POST, path: SIGNIN, handlers: [authController.login] });
     return routes;
   }
 }

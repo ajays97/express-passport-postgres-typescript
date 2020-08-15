@@ -1,35 +1,45 @@
-import Container from 'typedi';
+import { Service, Inject } from 'typedi';
 import { Request, Response } from 'express';
 import { AuthService } from '../../../services';
 import { ContainerDependencies } from '../../../utils/constants';
 import { UserDTO } from '../../../models/User';
 import { Logger } from 'winston';
+import BaseController from '../base.controller';
 
-export const register = async (request: Request, response: Response) => {
-  const logger: Logger = Container.get(ContainerDependencies.LOGGER);
-  logger.debug('Signing up new user: %o', request.body);
-  const { username, email, phone, password, firstName, lastName } = request.body;
-  const user: UserDTO = { username, email, phone, password, firstName, lastName };
+@Service('AuthController')
+class AuthController {
+  constructor(
+    @Inject(ContainerDependencies.LOGGER) private logger: Logger,
+    @Inject('AuthService') private authService: AuthService,
+    @Inject('BaseController') private response: BaseController
+  ) {}
 
-  try {
-    const authService: AuthService = Container.get(AuthService);
-    const signUpData = await authService.signUp(user);
-    response.json(signUpData).status(200);
-  } catch (error) {
-    return response.status(500).json({ message: error.message });
-  }
-};
+  public register = async (request: Request, response: Response) => {
+    this.logger.debug('Signing up new user: %o', request.body);
+    const { username, email, phone, password, firstName, lastName } = request.body;
+    const user: UserDTO = { username, email, phone, password, firstName, lastName };
 
-export const login = async (request: Request, response: Response) => {
-  const logger: Logger = Container.get(ContainerDependencies.LOGGER);
-  logger.debug('Signing in user: %o', request.body);
+    try {
+      const signUpData = await this.authService.signUp(user);
+      if (signUpData.isFailure) this.response.clientError(response, signUpData.error.message);
+      else this.response.ok(response, signUpData.getValue());
+    } catch (error) {
+      this.response.fail(response, error.message);
+    }
+  };
 
-  try {
-    const { email, password } = request.body;
-    const authService: AuthService = Container.get(AuthService);
-    const token = await authService.signIn(email, password);
-    return response.json({ token }).status(200);
-  } catch (error) {
-    return response.status(400).json({ message: error.message });
-  }
-};
+  public login = async (request: Request, response: Response) => {
+    this.logger.debug('Signing in user: %o', request.body);
+
+    try {
+      const { email, password } = request.body;
+      const tokenData = await this.authService.signIn(email, password);
+      if (tokenData.isFailure) this.response.clientError(response, tokenData.error.message);
+      else this.response.ok(response, tokenData.getValue());
+    } catch (error) {
+      this.response.fail(response, error.message);
+    }
+  };
+}
+
+export default AuthController;

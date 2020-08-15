@@ -1,5 +1,6 @@
 import { Service, Inject } from 'typedi';
 import { IUser } from '../../models/User';
+import { Result } from '../Result';
 
 @Service()
 class MailerService {
@@ -15,7 +16,7 @@ class MailerService {
     };
 
     this.emailClient.messages().send(data);
-    return { delivered: 1, status: 'ok' };
+    return Result.ok({ delivered: 1, status: 'ok' });
   }
   public StartEmailSequence(sequence: string, user: Partial<IUser>) {
     if (!user.email) {
@@ -28,7 +29,7 @@ class MailerService {
     // 3 - Schedule job for second email in 1-3 days or whatever
     // Every sequence can have its own behavior so maybe
     // the pattern Chain of Responsibility can help here.
-    return { delivered: 1, status: 'ok' };
+    return Result.ok({ delivered: 1, status: 'ok' });
   }
 }
 
